@@ -1,0 +1,17 @@
+[package]
+name = "hash256-rust-miner"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive", "env"] }
+dotenvy = "0.15"
+ethers = "2"
+hex = "0.4"
+num_cpus = "1"
+rand = "0.8"
+tiny-keccak = { version = "2", features = ["keccak"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "signal"] }
+
