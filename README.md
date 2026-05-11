@@ -58,6 +58,8 @@ CPU_BATCH_SIZE=50000
 GPU_BATCH_SIZE=67108864
 PRIORITY_FEE_GWEI=2
 KEEP_MINING=true
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_CHAT_ID=
 ```
 
 ## Catatan
@@ -66,4 +68,4 @@ KEEP_MINING=true
 - Jangan pakai private key wallet utama.
 - Backend OpenCL memilih GPU pertama dari platform pertama yang punya GPU.
 - Kalau `--backend auto`, OpenCL dicoba dulu lalu fallback ke CPU.
-
+- Telegram bersifat opsional dan hanya dikirim setelah transaksi mendapat receipt block. Jika Telegram gagal, miner tetap berjalan.

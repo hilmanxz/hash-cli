@@ -7,7 +7,7 @@ use ethers::{
     signers::{LocalWallet, Signer},
     types::{
         transaction::{eip1559::Eip1559TransactionRequest, eip2718::TypedTransaction},
-        Address, U256,
+        Address, H256, U256, U64,
     },
     utils::parse_units,
 };
@@ -34,6 +34,12 @@ pub struct Hash256Client {
     address: Option<Address>,
     read_contract: Hash256Contract<Provider<Http>>,
     write_contract: Option<Hash256Contract<SignerMiddleware<Provider<Http>, LocalWallet>>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct TxReport {
+    pub tx_hash: H256,
+    pub block_number: U64,
 }
 
 impl Hash256Client {
@@ -110,7 +116,7 @@ impl Hash256Client {
         Ok(challenge)
     }
 
-    pub async fn submit_solution(&self, nonce: U256, priority_fee_gwei: &str) -> Result<()> {
+    pub async fn submit_solution(&self, nonce: U256, priority_fee_gwei: &str) -> Result<TxReport> {
         let contract = self
             .write_contract
             .as_ref()
@@ -139,16 +145,18 @@ impl Hash256Client {
         call.tx = TypedTransaction::Eip1559(tx);
 
         let pending = call.send().await.context("TX failed saat submit mine")?;
-        println!("TX sent: {:?}", pending.tx_hash());
+        let tx_hash = pending.tx_hash();
+        println!("TX sent: {:?}", tx_hash);
         let receipt = pending
             .await
             .context("gagal menunggu receipt")?
             .context("transaksi tidak punya receipt")?;
-        println!(
-            "Success block: {}",
-            receipt.block_number.unwrap_or_default()
-        );
-        Ok(())
+        let block_number = receipt.block_number.unwrap_or_default();
+        println!("Success block: {}", block_number);
+        Ok(TxReport {
+            tx_hash,
+            block_number,
+        })
     }
 }
 

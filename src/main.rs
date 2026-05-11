@@ -2,6 +2,7 @@ mod config;
 mod eth;
 mod format;
 mod miner;
+mod telegram;
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand, ValueEnum};
@@ -75,8 +76,9 @@ async fn check_state(config: &Config) -> Result<()> {
 
 async fn mine_loop(config: &Config) -> Result<()> {
     let client = Hash256Client::with_wallet(&config.rpc_url, &config.private_key).await?;
+    let wallet = client.wallet_address();
 
-    println!("Wallet: {}", client.wallet_address());
+    println!("Wallet: {}", wallet);
     println!("Contract: {CONTRACT_ADDRESS}");
     println!("Backend: {:?}", config.backend);
 
@@ -97,9 +99,15 @@ async fn mine_loop(config: &Config) -> Result<()> {
         println!("Hash: {}", solution.hash);
         println!("Hashes: {}", solution.hashes);
 
-        client
+        let tx = client
             .submit_solution(U256::from(solution.nonce), &config.priority_fee_gwei)
             .await?;
+        if let Some(telegram) = &config.telegram {
+            match telegram::notify_success(telegram, wallet, &solution, &tx).await {
+                Ok(()) => println!("Telegram: sent"),
+                Err(err) => eprintln!("Telegram gagal: {err:#}"),
+            }
+        }
 
         if !config.keep_mining {
             break;
@@ -166,8 +174,8 @@ impl ProgressPrinter {
             return;
         }
         self.last = Instant::now();
-        print!(
-            "\r{} {} | {} hashes",
+        println!(
+            "{} | {} | {} hashes",
             backend.as_str(),
             hash_rate(hashrate),
             short_decimal(hashes)

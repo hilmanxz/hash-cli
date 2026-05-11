@@ -14,6 +14,13 @@ pub struct Config {
     pub gpu_batch: usize,
     pub priority_fee_gwei: String,
     pub keep_mining: bool,
+    pub telegram: Option<TelegramConfig>,
+}
+
+#[derive(Debug, Clone)]
+pub struct TelegramConfig {
+    pub bot_token: String,
+    pub chat_id: String,
 }
 
 impl Config {
@@ -46,6 +53,7 @@ impl Config {
             gpu_batch: normalize_gpu_batch(cli.gpu_batch),
             priority_fee_gwei: cli.priority_fee_gwei.clone(),
             keep_mining: !cli.once && env_keep != "false",
+            telegram: read_telegram_config(),
         })
     }
 }
@@ -53,4 +61,15 @@ impl Config {
 fn normalize_gpu_batch(batch: usize) -> usize {
     let batch = batch.max(65_536);
     batch - (batch % 64)
+}
+
+fn read_telegram_config() -> Option<TelegramConfig> {
+    let bot_token = env::var("TELEGRAM_BOT_TOKEN").ok()?;
+    let chat_id = env::var("TELEGRAM_CHAT_ID").ok()?;
+
+    if bot_token.trim().is_empty() || chat_id.trim().is_empty() {
+        return None;
+    }
+
+    Some(TelegramConfig { bot_token, chat_id })
 }
